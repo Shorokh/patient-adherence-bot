@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# dotenv
+.env
+.env.*
+
+# Virtualenv
+venv/
+ENV/
+env/
+.venv/
+env.bak/
+venv.bak/
+
+# VS Code
+.vscode/
+
+data/bot.db
+
+# Logs and local files
+*.log
+
+# Ignore IDE/editor temp files
+*~
+
+all_listings.txt

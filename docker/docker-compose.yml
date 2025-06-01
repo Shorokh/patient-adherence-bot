@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  bot:
+    build: .
+    container_name: med_bot
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    command: ["python", "main.py"]
