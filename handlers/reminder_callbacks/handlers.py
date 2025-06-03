@@ -1,5 +1,3 @@
-# Файл: handlers/reminder_callbacks/handlers.py
-
 from aiogram import types, Dispatcher
 
 from utils.db import SessionLocal
@@ -8,26 +6,26 @@ from models.medication import Medication
 from models.intake_log import IntakeLog
 from models.user import User
 from utils.helpers import calculate_next_due_for_timezone
-
+from utils.i18n import t
 
 async def process_taken(callback: types.CallbackQuery):
-    reminder_id = int(callback.data.split(":")[1])
     session = SessionLocal()
-    rem = session.query(Reminder).filter(Reminder.id == reminder_id).first()
+    rem = session.query(Reminder).filter(Reminder.id == int(callback.data.split(":")[1])).first()
     if not rem:
-        await callback.answer("Напоминание не найдено.")
+        await callback.answer("Reminder not found.")  # unlikely to localize here
         session.close()
         return
 
+    user = session.query(User).filter(User.telegram_id == rem.medication.owner.telegram_id).first()
+    lang = user.language
     log = IntakeLog(medication_id=rem.medication_id, status="taken")
     session.add(log)
 
     rem.retry_count = 0
     med = rem.medication
-    # Пересчитываем next_due для регулярных
     if med.intake_type == "regular" and med.time_list:
-        user = session.query(User).filter(User.telegram_id == med.user_id).first()
-        tz = user.timezone or "+00:00"
+        user_tz = session.query(User).filter(User.telegram_id == med.user_id).first()
+        tz = user_tz.timezone or "+00:00"
         rem.next_due = calculate_next_due_for_timezone(med.time_list, tz)
     else:
         rem.is_active = False
@@ -36,27 +34,27 @@ async def process_taken(callback: types.CallbackQuery):
     session.commit()
     session.close()
 
-    await callback.message.answer("✅ Отмечено как «Принял».")
+    await callback.message.answer(t("took", lang))
     await callback.answer()
 
-
 async def process_skipped(callback: types.CallbackQuery):
-    reminder_id = int(callback.data.split(":")[1])
     session = SessionLocal()
-    rem = session.query(Reminder).filter(Reminder.id == reminder_id).first()
+    rem = session.query(Reminder).filter(Reminder.id == int(callback.data.split(":")[1])).first()
     if not rem:
-        await callback.answer("Напоминание не найдено.")
+        await callback.answer("Reminder not found.")
         session.close()
         return
 
+    user = session.query(User).filter(User.telegram_id == rem.medication.owner.telegram_id).first()
+    lang = user.language
     log = IntakeLog(medication_id=rem.medication_id, status="skipped")
     session.add(log)
 
     rem.retry_count = 0
     med = rem.medication
     if med.intake_type == "regular" and med.time_list:
-        user = session.query(User).filter(User.telegram_id == med.user_id).first()
-        tz = user.timezone or "+00:00"
+        user_tz = session.query(User).filter(User.telegram_id == med.user_id).first()
+        tz = user_tz.timezone or "+00:00"
         rem.next_due = calculate_next_due_for_timezone(med.time_list, tz)
     else:
         rem.is_active = False
@@ -65,42 +63,29 @@ async def process_skipped(callback: types.CallbackQuery):
     session.commit()
     session.close()
 
-    await callback.message.answer("❌ Отмечено как «Пропущено».")
+    await callback.message.answer(t("skipped", lang))
     await callback.answer()
 
-
 async def process_situational(callback: types.CallbackQuery):
-    # callback.data = "take_sit:{med_id}"
-    med_id = int(callback.data.split(":")[1])
     session = SessionLocal()
-    med = session.query(Medication).filter(Medication.id == med_id).first()
+    med = session.query(Medication).filter(Medication.id == int(callback.data.split(":")[1])).first()
     if not med:
-        await callback.answer("Препарат не найден.")
+        await callback.answer("Medication not found.")
         session.close()
         return
 
-    # Сохраняем имя до закрытия сессии
+    user = session.query(User).filter(User.telegram_id == med.user_id).first()
+    lang = user.language
     med_name = med.name
-
     log = IntakeLog(medication_id=med.id, status="taken")
     session.add(log)
     session.commit()
     session.close()
 
-    await callback.message.answer(f"✅ Вы отметили приём препарата «{med_name}».")
+    await callback.message.answer(t("sit_taken", lang, name=med_name))
     await callback.answer()
 
-
 def register_handlers(dp: Dispatcher):
-    dp.callback_query.register(
-        process_taken,
-        lambda c: c.data and c.data.startswith("taken:")
-    )
-    dp.callback_query.register(
-        process_skipped,
-        lambda c: c.data and c.data.startswith("skipped:")
-    )
-    dp.callback_query.register(
-        process_situational,
-        lambda c: c.data and c.data.startswith("take_sit:")
-    )
+    dp.callback_query.register(process_taken, lambda c: c.data and c.data.startswith("taken:"))
+    dp.callback_query.register(process_skipped, lambda c: c.data and c.data.startswith("skipped:"))
+    dp.callback_query.register(process_situational, lambda c: c.data and c.data.startswith("take_sit:"))

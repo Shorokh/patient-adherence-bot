@@ -1,5 +1,3 @@
-# Файл: scheduler.py
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timezone
 from aiogram import Bot
@@ -11,18 +9,15 @@ from utils.keyboards import build_reminder_keyboard
 
 bot = Bot(token=BOT_TOKEN)
 
-
 async def send_reminder(reminder, session):
     med = session.query(Medication).filter(Medication.id == reminder.medication_id).first()
     user = med.owner
-
-    text = (
-        f"🔔 Пора принять препарат: {med.name} ({med.dosage}).\n"
-        f"Условия: {', '.join(med.conditions) if med.conditions else 'нет'}."
-    )
+    lang = user.language
+    conditions = ", ".join(med.conditions) if med.conditions else "none"
+    from utils.i18n import t
+    text = t("reminder_text", lang, name=med.name, dosage=med.dosage, conditions=conditions)
     keyboard = build_reminder_keyboard(reminder.id)
     await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=keyboard)
-
 
 async def check_and_send_reminders():
     session = SessionLocal()
@@ -34,14 +29,12 @@ async def check_and_send_reminders():
     ).all()
 
     for rem in reminders:
-        # Запускаем асинхронный send_reminder
         await send_reminder(rem, session)
         rem.retry_count += 1
         session.add(rem)
 
     session.commit()
     session.close()
-
 
 def start_scheduler():
     scheduler = AsyncIOScheduler(timezone="UTC")

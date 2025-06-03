@@ -1,18 +1,76 @@
-# Простейшая мультиязычность через словари
-MESSAGES = {
+translations = {
     "ru": {
-        "welcome": "Привет! Выберите язык:",
-        "select_ui": "Выберите режим интерфейса:",
-        "select_role": "Выберите роль (пациент или помощник):",
-        # Добавляйте другие строки по необходимости
+        "greeting": "Привет! Выберите язык:",
+        "choose_language": "Выберите язык:",
+        "choose_ui": "Теперь выберите режим интерфейса:",
+        "choose_role": "И, наконец, выберите вашу роль:",
+        "choose_timezone": "Выберите свой часовой пояс:",
+        "enter_timezone_manual": "Введите свой часовой пояс вручную (например, Asia/Novosibirsk или +06:00):",
+        "registration_complete": "Регистрация завершена! Вот ваше главное меню:",
+        "already_registered": "Вы уже зарегистрированы. Вот ваше главное меню:",
+        "main_menu": "Главное меню:",
+        "enter_name": "Введите название препарата:",
+        "enter_dosage": "Введите дозировку (например, 500 мг):",
+        "choose_type": "Выберите тип приёма:",
+        "enter_times": "Введите время приёма в формате чч:мм (например, 08:30) или несколько через запятую:",
+        "enter_conditions": "Введите условия приёма (через запятую) или «нет»:",
+        "choose_skip": "Выберите поведение при пропуске:",
+        "med_added": "✅ Препарат добавлен успешно!",
+        "nothing_to_cancel": "Нечего отменять.",
+        "cancelled": "Добавление препарата отменено. Вы возвращены в главное меню.",
+        "my_meds_empty": "ℹ️ У вас пока нет добавленных препаратов.",
+        "reminder_text": "🔔 Пора принять препарат: {name} ({dosage}). Условия: {conditions}.",
+        "took": "✅ Отмечено как «Принял».",
+        "skipped": "❌ Отмечено как «Пропущено».",
+        "sit_taken": "✅ Вы отметили приём препарата «{name}».",
+        "settings_title": "⚙️ Настройки:",
+        "settings_language": "Язык изменён на {language}.",
+        "settings_ui": "Режим интерфейса установлен на {ui_mode}.",
+        "settings_role": "Роль изменена на {new_role}.",
+        "first_register": "Сначала зарегистрируйтесь – введите /start",
+        "choose_setting": "Пожалуйста, выберите пункт меню настроек.",
+        "profile_unregistered": "❗️ Вы не зарегистрированы. Сначала выполните /start.",
+        "profile_text": "📋 Ваш профиль:\n• Telegram ID: {id}\n• Язык: {lang}\n• UI-режим: {ui}\n• Роль: {role}\n• Часовой пояс: {tz}\n",
+        "show_meds_prompt": "ℹ️ У вас пока нет добавленных препаратов.",
+        "welcome_back": "Вы уже зарегистрированы. Вот ваше главное меню:"
     },
     "en": {
-        "welcome": "Hello! Please choose your language:",
-        "select_ui": "Select UI mode:",
-        "select_role": "Select your role (patient or assistant):",
-        # Другие переводы
+        "greeting": "Hello! Choose language:",
+        "choose_language": "Choose language:",
+        "choose_ui": "Now choose UI mode:",
+        "choose_role": "Finally, choose your role:",
+        "choose_timezone": "Choose your time zone:",
+        "enter_timezone_manual": "Enter your time zone manually (e.g. Asia/Novosibirsk or +06:00):",
+        "registration_complete": "Registration complete! Here is your main menu:",
+        "already_registered": "You are already registered. Here is your main menu:",
+        "main_menu": "Main menu:",
+        "enter_name": "Enter medication name:",
+        "enter_dosage": "Enter dosage (e.g. 500 mg):",
+        "choose_type": "Choose intake type:",
+        "enter_times": "Enter intake time as HH:MM (e.g. 08:30) or multiple separated by commas:",
+        "enter_conditions": "Enter intake conditions (comma-separated) or \"none\":",
+        "choose_skip": "Choose skip behavior:",
+        "med_added": "✅ Medication added successfully!",
+        "nothing_to_cancel": "Nothing to cancel.",
+        "cancelled": "Medication addition canceled. You are back to main menu.",
+        "my_meds_empty": "ℹ️ You have no added medications yet.",
+        "reminder_text": "🔔 Time to take medication: {name} ({dosage}). Conditions: {conditions}.",
+        "took": "✅ Marked as “Taken.”",
+        "skipped": "❌ Marked as “Skipped.”",
+        "sit_taken": "✅ You marked intake of “{name}.”",
+        "settings_title": "⚙️ Settings:",
+        "settings_language": "Language changed to {language}.",
+        "settings_ui": "UI mode set to {ui_mode}.",
+        "settings_role": "Role changed to {new_role}.",
+        "first_register": "Please register first – use /start",
+        "choose_setting": "Please choose a settings option.",
+        "profile_unregistered": "❗️ You are not registered. First use /start.",
+        "profile_text": "📋 Your profile:\n• Telegram ID: {id}\n• Language: {lang}\n• UI mode: {ui}\n• Role: {role}\n• Time zone: {tz}\n",
+        "show_meds_prompt": "ℹ️ You have no added medications yet.",
+        "welcome_back": "You are already registered. Here is your main menu:"
     }
 }
 
-def t(lang: str, key: str) -> str:
-    return MESSAGES.get(lang, MESSAGES["ru"]).get(key, "")
+def t(key: str, lang: str, **kwargs) -> str:
+    text = translations.get(lang, translations["ru"]).get(key, "")
+    return text.format(**kwargs)

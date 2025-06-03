@@ -1,6 +1,5 @@
 from utils.db import Base, engine
 
-# Импортируем все модели, чтобы заполнить Base.metadata
 import models.user
 import models.medication
 import models.reminder

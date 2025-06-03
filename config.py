@@ -1,16 +1,9 @@
 import os
+from dotenv import load_dotenv
 
-# Токен бота (можно задать в .env или напрямую здесь)
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN_HERE")
+load_dotenv()
 
-# Путь к файлу SQLite
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 DB_PATH = os.getenv("DB_PATH", "data/bot.db")
-
-# Язык по умолчанию
-DEFAULT_LANGUAGE = "ru"
-
-# Режим интерфейса по умолчанию (“standard” или “simple”)
-DEFAULT_UI_MODE = "standard"
-
-# Максимальное число повторных напоминаний, если пользователь не ответил
-MAX_REMINDER_RETRIES = 3
+DATABASE_URL = f"sqlite:///{DB_PATH}"
+MAX_REMINDER_RETRIES = int(os.getenv("MAX_REMINDER_RETRIES", 3))

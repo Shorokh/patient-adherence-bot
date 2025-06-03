@@ -1,5 +1,3 @@
-# Файл: models/user.py
-
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from . import Base
@@ -11,7 +9,7 @@ class User(Base):
     language = Column(String, default="ru")
     ui_mode = Column(String, default="standard")
     role = Column(String, default="patient")
-    timezone = Column(String, nullable=True)       # новое поле
+    timezone = Column(String, nullable=True)
     assistant_id = Column(Integer, ForeignKey("users.telegram_id"), nullable=True)
 
     medications = relationship("Medication", back_populates="owner")

@@ -1,5 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
-
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 def build_reminder_keyboard(reminder_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
@@ -10,16 +9,3 @@ def build_reminder_keyboard(reminder_id: int) -> InlineKeyboardMarkup:
             ]
         ]
     )
-
-
-
-def example_reply_kb():
-    # Пример функции, создающей ReplyKeyboardMarkup
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Кнопка 1"), KeyboardButton(text="Кнопка 2")],
-            [KeyboardButton(text="Кнопка 3")]
-        ],
-        resize_keyboard=True
-    )
-    return kb
