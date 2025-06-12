@@ -10,5 +10,6 @@ class Reminder(Base):
     next_due = Column(DateTime, nullable=False)
     retry_count = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+    double_next = Column(Boolean, default=False)
 
     medication = relationship("Medication", back_populates="reminders")

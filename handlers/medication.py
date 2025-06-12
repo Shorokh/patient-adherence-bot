@@ -28,44 +28,30 @@ class MedicationStates(StatesGroup):
 
 def cancel_keyboard(lang: str) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=("Отмена" if lang == "ru" else "Cancel"))]],
+        keyboard=[[KeyboardButton(text=t("btn_cancel", lang))]],
         resize_keyboard=True,
         one_time_keyboard=True
     )
 
 def type_inline_kb(lang: str) -> InlineKeyboardMarkup:
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Регулярный", callback_data="medtype_regular"),
-                InlineKeyboardButton(text="Ситуативный", callback_data="medtype_situational")
-            ]
-        ])
-    else:
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Regular", callback_data="medtype_regular"),
-                InlineKeyboardButton(text="Situational", callback_data="medtype_situational")
-            ]
-        ])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=t("btn_regular", lang), callback_data="medtype_regular"),
+            InlineKeyboardButton(text=t("btn_situational", lang), callback_data="medtype_situational")
+        ]
+    ])
 
 def skip_inline_kb(lang: str) -> InlineKeyboardMarkup:
-    if lang == "ru":
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Удвоить", callback_data="skp_double"),
-                InlineKeyboardButton(text="Пропустить", callback_data="skp_skip"),
-                InlineKeyboardButton(text="Без напоминаний", callback_data="skp_none")
-            ]
-        ])
-    else:
-        return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Double", callback_data="skp_double"),
-                InlineKeyboardButton(text="Skip", callback_data="skp_skip"),
-                InlineKeyboardButton(text="No reminders", callback_data="skp_none")
-            ]
-        ])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=t("btn_later", lang), callback_data="skp_later"),
+            InlineKeyboardButton(text=t("btn_skip", lang), callback_data="skp_skip")
+        ],
+        [
+            InlineKeyboardButton(text=t("btn_double", lang), callback_data="skp_double"),
+            InlineKeyboardButton(text=t("skip_other", lang), callback_data="skp_other")
+        ]
+    ])
 
 async def cancel_medication(message: types.Message, state: FSMContext):
     user_lang = "ru"
@@ -107,10 +93,16 @@ async def process_name(message: types.Message, state: FSMContext):
     lang = user.language if user else "ru"
 
     text = message.text.strip()
-    if text.lower() in ["отмена", "cancel"]:
+    cancel_values = [t("btn_cancel", l) for l in ["ru", "en"]]
+    if text.lower() in [v.lower() for v in cancel_values]:
         return await cancel_medication(message, state)
 
-    await state.update_data(name=text)
+    # Если редактируем, то разрешаем оставить текущее значение
+    data = await state.get_data()
+    if data.get("edit_med_id") and (not text or text == data.get("name", "")):
+        await state.update_data(name=data.get("name", ""))
+    else:
+        await state.update_data(name=text)
     await message.answer(t("enter_dosage", lang), reply_markup=cancel_keyboard(lang))
     await state.set_state(MedicationStates.waiting_for_dosage)
 
@@ -121,10 +113,15 @@ async def process_dosage(message: types.Message, state: FSMContext):
     lang = user.language if user else "ru"
 
     text = message.text.strip()
-    if text.lower() in ["отмена", "cancel"]:
+    cancel_values = [t("btn_cancel", l) for l in ["ru", "en"]]
+    if text.lower() in [v.lower() for v in cancel_values]:
         return await cancel_medication(message, state)
 
-    await state.update_data(dosage=text)
+    data = await state.get_data()
+    if data.get("edit_med_id") and (not text or text == data.get("dosage", "")):
+        await state.update_data(dosage=data.get("dosage", ""))
+    else:
+        await state.update_data(dosage=text)
     await message.answer(t("choose_type", lang), reply_markup=type_inline_kb(lang))
     await state.set_state(MedicationStates.waiting_for_type)
 
@@ -135,15 +132,16 @@ async def process_type_text(message: types.Message, state: FSMContext):
     lang = user.language if user else "ru"
 
     text = message.text.strip().lower()
-    if text in ["отмена", "cancel"]:
+    cancel_values = [t("btn_cancel", l).lower() for l in ["ru", "en"]]
+    if text in cancel_values:
         return await cancel_medication(message, state)
 
-    valid_inputs = ["регулярный", "ситуативный"] if lang == "ru" else ["regular", "situational"]
+    valid_inputs = [t("btn_regular", lang).lower(), t("btn_situational", lang).lower()]
     if text not in valid_inputs:
         await message.answer(t("choose_type", lang), reply_markup=type_inline_kb(lang))
         return
 
-    intake_type = "regular" if text in ["регулярный", "regular"] else "situational"
+    intake_type = "regular" if text == t("btn_regular", lang).lower() else "situational"
     await state.update_data(intake_type=intake_type)
     await message.delete()
 
@@ -164,7 +162,6 @@ async def process_type(callback: types.CallbackQuery, state: FSMContext):
     intake_type = "regular" if callback.data.endswith("_regular") else "situational"
     await state.update_data(intake_type=intake_type)
     await callback.message.delete()
-
     if intake_type == "regular":
         await callback.message.answer(t("enter_times", lang), reply_markup=cancel_keyboard(lang))
         await state.set_state(MedicationStates.waiting_for_times)
@@ -182,7 +179,8 @@ async def process_times(message: types.Message, state: FSMContext):
     lang = user.language if user else "ru"
 
     text = message.text.strip()
-    if text.lower() in ["отмена", "cancel"]:
+    cancel_values = [t("btn_cancel", l) for l in ["ru", "en"]]
+    if text.lower() in [v.lower() for v in cancel_values]:
         return await cancel_medication(message, state)
 
     times = parse_time_list(text)
@@ -201,11 +199,13 @@ async def process_conditions(message: types.Message, state: FSMContext):
     lang = user.language if user else "ru"
 
     text = message.text.strip()
-    if text.lower() in ["отмена", "cancel"]:
+    cancel_values = [t("btn_cancel", l) for l in ["ru", "en"]]
+    if text.lower() in [v.lower() for v in cancel_values]:
         return await cancel_medication(message, state)
 
+    none_values = ["нет", "none"] + [t("btn_none", l).lower() for l in ["ru", "en"]]
     cond_text = text.lower()
-    conditions = [] if cond_text in ["нет", "none"] else [c.strip() for c in text.split(",")]
+    conditions = [] if cond_text in none_values else [c.strip() for c in text.split(",")]
     await state.update_data(conditions=conditions)
 
     data = await state.get_data()
@@ -223,11 +223,71 @@ async def process_skip(callback: types.CallbackQuery, state: FSMContext):
 
     skip_mode = callback.data.split("_")[1]
     await state.update_data(skip_behavior=skip_mode)
+    try:
+        await callback.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
     await save_medication(callback_or_message=callback, state=state)
     await callback.answer()
 
 async def save_medication(callback_or_message, state: FSMContext):
     data = await state.get_data()
+    session = SessionLocal()
+    edit_med_id = data.get("edit_med_id")
+    if edit_med_id:
+        # Редактирование существующего препарата
+        med = session.query(Medication).filter(Medication.id == edit_med_id).first()
+        if med:
+            med.name = data["name"]
+            med.dosage = data["dosage"]
+            med.intake_type = data["intake_type"]
+            med.time_list = data.get("times", [])
+            med.conditions = data.get("conditions", [])
+            med.skip_behavior = data.get("skip_behavior", "")
+            session.add(med)
+            session.commit()
+            # Обновить напоминание, если регулярный
+            if med.intake_type == "regular" and med.time_list:
+                rem = session.query(Reminder).filter(Reminder.medication_id == med.id).first()
+                user = session.query(User).filter(User.telegram_id == callback_or_message.from_user.id).first()
+                tz = user.timezone or "+00:00"
+                next_due_utc = calculate_next_due_for_timezone(med.time_list, tz)
+                if rem:
+                    rem.next_due = next_due_utc
+                    rem.retry_count = 0
+                    rem.is_active = True
+                    session.add(rem)
+                else:
+                    rem = Reminder(
+                        medication_id=med.id,
+                        next_due=next_due_utc,
+                        retry_count=0,
+                        is_active=True
+                    )
+                    session.add(rem)
+                session.commit()
+            elif med.intake_type == "situational":
+                # Удалить напоминание, если был
+                rem = session.query(Reminder).filter(Reminder.medication_id == med.id).first()
+                if rem:
+                    session.delete(rem)
+                    session.commit()
+        session.close()
+        from handlers.menu import main_menu_keyboard
+        user_session = SessionLocal()
+        user = user_session.query(User).filter(User.telegram_id == callback_or_message.from_user.id).first()
+        user_session.close()
+        lang = user.language if user else "ru"
+        if isinstance(callback_or_message, types.CallbackQuery):
+            await callback_or_message.message.answer(("Изменения сохранены." if lang == "ru" else "Changes saved."), reply_markup=ReplyKeyboardRemove())
+            chat = callback_or_message.message
+        else:
+            await callback_or_message.answer(("Изменения сохранены." if lang == "ru" else "Changes saved."), reply_markup=ReplyKeyboardRemove())
+            chat = callback_or_message
+        kb = main_menu_keyboard(user)
+        await chat.answer(t("main_menu", lang), reply_markup=kb)
+        await state.clear()
+        return
     session = SessionLocal()
 
     med = Medication(
@@ -279,8 +339,10 @@ async def save_medication(callback_or_message, state: FSMContext):
     await state.clear()
 
 def register_handlers(dp: Dispatcher):
-    dp.message.register(cmd_add_med, lambda m: m.text in ["➕ Добавить препарат", "➕ Add Medication"])
-    dp.message.register(cancel_medication, StateFilter(MedicationStates), lambda m: m.text.lower() in ["отмена", "cancel"])
+    add_med_texts = [t("btn_add_med", lang) for lang in ["ru", "en"]]
+    cancel_texts = [t("btn_cancel", lang).lower() for lang in ["ru", "en"]]
+    dp.message.register(cmd_add_med, lambda m: m.text in add_med_texts)
+    dp.message.register(cancel_medication, StateFilter(MedicationStates), lambda m: m.text.lower() in cancel_texts)
     dp.message.register(process_name, StateFilter(MedicationStates.waiting_for_name))
     dp.message.register(process_dosage, StateFilter(MedicationStates.waiting_for_dosage))
     dp.callback_query.register(process_type, lambda c: c.data and c.data.startswith("medtype_"), StateFilter(MedicationStates.waiting_for_type))

@@ -34,6 +34,7 @@ async def process_taken(callback: types.CallbackQuery):
     session.commit()
     session.close()
 
+    await callback.message.edit_reply_markup(reply_markup=None)
     await callback.message.answer(t("took", lang))
     await callback.answer()
 
@@ -52,10 +53,31 @@ async def process_skipped(callback: types.CallbackQuery):
 
     rem.retry_count = 0
     med = rem.medication
-    if med.intake_type == "regular" and med.time_list:
+    # --- Новая логика для skip_behavior ---
+    if hasattr(med, 'skip_behavior') and med.skip_behavior == "later":
+        from datetime import datetime, timedelta
+        rem.next_due = datetime.utcnow() + timedelta(hours=1)
+        rem.is_active = True
+        # Сбросить флаг удвоения, если был
+        if hasattr(rem, 'double_next'):
+            rem.double_next = False
+    elif hasattr(med, 'skip_behavior') and med.skip_behavior == "double":
+        # Установить флаг удвоения для следующего напоминания
+        rem.double_next = True
+        # Следующее напоминание по расписанию
+        if med.intake_type == "regular" and med.time_list:
+            user_tz = session.query(User).filter(User.telegram_id == med.user_id).first()
+            tz = user_tz.timezone or "+00:00"
+            rem.next_due = calculate_next_due_for_timezone(med.time_list, tz)
+        else:
+            rem.is_active = False
+    elif med.intake_type == "regular" and med.time_list:
         user_tz = session.query(User).filter(User.telegram_id == med.user_id).first()
         tz = user_tz.timezone or "+00:00"
         rem.next_due = calculate_next_due_for_timezone(med.time_list, tz)
+        # Сбросить флаг удвоения, если был
+        if hasattr(rem, 'double_next'):
+            rem.double_next = False
     else:
         rem.is_active = False
 
@@ -63,6 +85,7 @@ async def process_skipped(callback: types.CallbackQuery):
     session.commit()
     session.close()
 
+    await callback.message.edit_reply_markup(reply_markup=None)
     await callback.message.answer(t("skipped", lang))
     await callback.answer()
 

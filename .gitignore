@@ -16,7 +16,7 @@ venv.bak/
 # VS Code
 .vscode/
 
-data/bot.db
+data/
 
 # Logs and local files
 *.log
@@ -25,3 +25,6 @@ data/bot.db
 *~
 
 all_listings.txt
+
+alembic/
+alembic.ini

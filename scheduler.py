@@ -1,7 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timezone
 from aiogram import Bot
-from config import BOT_TOKEN, MAX_REMINDER_RETRIES
+from config import BOT_TOKEN, MAX_REMINDER_RETRIES, REMINDER_INTERVAL_MINUTES
 from utils.db import SessionLocal
 from models.reminder import Reminder
 from models.medication import Medication
@@ -15,8 +15,19 @@ async def send_reminder(reminder, session):
     lang = user.language
     conditions = ", ".join(med.conditions) if med.conditions else "none"
     from utils.i18n import t
-    text = t("reminder_text", lang, name=med.name, dosage=med.dosage, conditions=conditions)
-    keyboard = build_reminder_keyboard(reminder.id)
+    # --- Учет удвоенной дозы ---
+    double_dose = getattr(reminder, 'double_next', False)
+    dosage = med.dosage
+    if double_dose:
+        if lang == "ru":
+            dosage = f"{dosage} (двойная доза!)"
+        else:
+            dosage = f"{dosage} (double dose!)"
+        reminder.double_next = False  # сбрасываем флаг после напоминания
+        session.add(reminder)
+        session.commit()
+    text = t("reminder_text", lang, name=med.name, dosage=dosage, conditions=conditions)
+    keyboard = build_reminder_keyboard(reminder.id, lang)
     await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=keyboard)
 
 async def check_and_send_reminders():
@@ -38,5 +49,5 @@ async def check_and_send_reminders():
 
 def start_scheduler():
     scheduler = AsyncIOScheduler(timezone="UTC")
-    scheduler.add_job(check_and_send_reminders, "interval", minutes=1)
+    scheduler.add_job(check_and_send_reminders, "interval", minutes=REMINDER_INTERVAL_MINUTES)
     scheduler.start()

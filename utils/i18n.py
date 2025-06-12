@@ -1,3 +1,5 @@
+# Файл: utils/i18n.py
+
 translations = {
     "ru": {
         "greeting": "Привет! Выберите язык:",
@@ -5,7 +7,7 @@ translations = {
         "choose_ui": "Теперь выберите режим интерфейса:",
         "choose_role": "И, наконец, выберите вашу роль:",
         "choose_timezone": "Выберите свой часовой пояс:",
-        "enter_timezone_manual": "Введите свой часовой пояс вручную (например, Asia/Novosibirsk или +06:00):",
+        "enter_timezone_manual": "Введите свой часовой пояс вручную (например, Asia/Novosибирск или +06:00):",
         "registration_complete": "Регистрация завершена! Вот ваше главное меню:",
         "already_registered": "Вы уже зарегистрированы. Вот ваше главное меню:",
         "main_menu": "Главное меню:",
@@ -32,7 +34,33 @@ translations = {
         "profile_unregistered": "❗️ Вы не зарегистрированы. Сначала выполните /start.",
         "profile_text": "📋 Ваш профиль:\n• Telegram ID: {id}\n• Язык: {lang}\n• UI-режим: {ui}\n• Роль: {role}\n• Часовой пояс: {tz}\n",
         "show_meds_prompt": "ℹ️ У вас пока нет добавленных препаратов.",
-        "welcome_back": "Вы уже зарегистрированы. Вот ваше главное меню:"
+        "welcome_back": "Вы уже зарегистрированы. Вот ваше главное меню:",
+
+        "btn_add_med": "➕ Добавить препарат",
+        "btn_my_meds": "💊 Мои препараты",
+        "btn_settings": "⚙️ Настройки",
+        "btn_statistics": "📈 Статистика",
+        "btn_cancel": "Отмена",
+        "btn_regular": "Регулярный",
+        "btn_situational": "Ситуативный",
+        "btn_double": "Удвоить",
+        "btn_skip": "Пропустить",
+        "btn_none": "Без напоминаний",
+        "btn_change_language": "Сменить язык",
+        "btn_change_ui": "Сменить режим UI",
+        "btn_change_role": "Изменить роль",
+        "btn_back_main": "Назад в главное",
+        "btn_mark_taken": "✅ Принял",
+        "btn_skip": "❌ Пропустил",
+
+        "intake_regular": "Регулярный",
+        "intake_situational": "Ситуативный",
+        "label_time": "Время приёма (чч:мм): ",
+        "label_conditions": "Условия: ",
+        "skip_double": "Удвоить",
+        "skip_skip": "Пропустить",
+        "skip_none": "Без напоминаний",
+        "label_on_skip": "При пропуске: "
     },
     "en": {
         "greeting": "Hello! Choose language:",
@@ -40,7 +68,7 @@ translations = {
         "choose_ui": "Now choose UI mode:",
         "choose_role": "Finally, choose your role:",
         "choose_timezone": "Choose your time zone:",
-        "enter_timezone_manual": "Enter your time zone manually (e.g. Asia/Novosibirsk or +06:00):",
+        "enter_timezone_manual": "Enter your time zone manually (e.g. Asia/Novosибирск or +06:00):",
         "registration_complete": "Registration complete! Here is your main menu:",
         "already_registered": "You are already registered. Here is your main menu:",
         "main_menu": "Main menu:",
@@ -67,10 +95,38 @@ translations = {
         "profile_unregistered": "❗️ You are not registered. First use /start.",
         "profile_text": "📋 Your profile:\n• Telegram ID: {id}\n• Language: {lang}\n• UI mode: {ui}\n• Role: {role}\n• Time zone: {tz}\n",
         "show_meds_prompt": "ℹ️ You have no added medications yet.",
-        "welcome_back": "You are already registered. Here is your main menu:"
+        "welcome_back": "You are already registered. Here is your main menu:",
+
+        "btn_add_med": "➕ Add Medication",
+        "btn_my_meds": "💊 My Medications",
+        "btn_settings": "⚙️ Settings",
+        "btn_statistics": "📈 Statistics",
+        "btn_cancel": "Cancel",
+        "btn_regular": "Regular",
+        "btn_situational": "Situational",
+        "btn_double": "Double",
+        "btn_skip": "Skip",
+        "btn_none": "No reminders",
+        "btn_change_language": "Change Language",
+        "btn_change_ui": "Change UI Mode",
+        "btn_change_role": "Change Role",
+        "btn_back_main": "Back to Main",
+        "btn_mark_taken": "✅ Taken",
+        "btn_skip": "❌ Skipped",
+
+        "intake_regular": "Regular",
+        "intake_situational": "Situational",
+        "label_time": "Intake times (HH:MM): ",
+        "label_conditions": "Conditions: ",
+        "skip_double": "Double",
+        "skip_skip": "Skip",
+        "skip_none": "No reminders",
+        "label_on_skip": "On skip: "
     }
 }
 
 def t(key: str, lang: str, **kwargs) -> str:
     text = translations.get(lang, translations["ru"]).get(key, "")
     return text.format(**kwargs)
+
+SUPPORTED_LANGS = list(translations.keys())
